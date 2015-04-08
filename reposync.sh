@@ -68,7 +68,7 @@ check_dependencies(){
 
   PKG_HTTPD=$(which httpd)
   if [ -z "$PKG_HTTPD" ]; then
-    yum -y install httpd
+    yum -q -y install httpd
     chkconfig --levels 235 httpd on
     HOSTNAME=$(grep HOSTNAME /etc/sysconfig/network | sed 's/HOSTNAME=//g')
     sed -i "s/#ServerName www.example.com:80/ServerName $HOSTNAME/g" /etc/httpd/conf/httpd.conf
