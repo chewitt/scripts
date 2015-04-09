@@ -66,17 +66,17 @@ check_credentials(){
 }
 
 check_dependencies(){
-  PKG_REPOSYNC=$(which reposync)
+  PKG_REPOSYNC=$(rpm -qa | grep yum-utils)
   if [ -z "$PKG_REPOSYNC" ]; then
     yum -q -y install yum-utils
   fi
 
-  PKG_CREATEREPO=$(which createrepo)
+  PKG_CREATEREPO=$(rpm -qa | grep createrepo)
   if [ -z "$PKG_CREATEREPO" ]; then
     yum -q -y install createrepo
   fi
 
-  PKG_HTTPD=$(which httpd)
+  PKG_HTTPD=$(rpm- -qa | grep httpd)
   if [ -z "$PKG_HTTPD" ]; then
     yum -q -y install httpd
     chkconfig --levels 235 httpd on
