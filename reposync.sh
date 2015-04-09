@@ -26,6 +26,7 @@ check_root(){
   if [ "$(id -u)" != "0" ]; then
     clear
     echo "ERROR: This script must be run as root!"
+    echo ""
     exit 1
   fi
 }
@@ -34,6 +35,7 @@ check_arch(){
   if [ "$(uname -m)" = "i686" ]; then
     clear
     echo "ERROR: This script must be run on CentOS 64-bit!"
+    echo ""
     exit 1
   fi
 }
