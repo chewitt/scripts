@@ -62,6 +62,7 @@ check_credentials(){
     done
     echo "LIVE_USER=$LIVE_USER" > ~/.rsalive
     echo "LIVE_PASS=$LIVE_PASS" >> ~/.rsalive
+    echo ""
   fi
 }
 
@@ -76,7 +77,7 @@ check_dependencies(){
     yum -q -y install createrepo
   fi
 
-  PKG_HTTPD=$(rpm- -qa | grep httpd)
+  PKG_HTTPD=$(rpm -qa | grep httpd)
   if [ -z "$PKG_HTTPD" ]; then
     yum -q -y install httpd
     chkconfig --levels 235 httpd on
