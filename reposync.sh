@@ -29,10 +29,16 @@ check_root(){
   fi
 }
 
+check_arch(){
+  if [ "$(uname -m)" = "i686" ]; then
+    echo "ERROR: This script must be run on CentOS 64-bit!"
+    exit 1
+  fi
+}
+
 check_credentials(){
-  RSALIVE="/root/.rsalive"
-  if [ -f "$RSALIVE" ]; then
-    . $RSALIVE
+  if [ -f /root/.rsalive ]; then
+    . /root/.rsalive
   else
     clear
     echo "Please enter your RSA Live! credentials"
@@ -43,7 +49,7 @@ check_credentials(){
     read LIVE_PASS
     echo ""
     while true; do
-      read -p "You entered $LIVE_USER / $LIVE_PASS; correct? [Y/N]" answer
+      read -p "You entered $LIVE_USER and $LIVE_PASS; correct? [y/n]" answer
       case $answer in
         [Yy]* ) break;;
         [Nn]* ) check_credentials;;
@@ -124,6 +130,7 @@ do_selinux(){
 
 main(){
   check_root
+  check_arch
   check_credentials
   check_dependencies
   do_cleanzeros
