@@ -23,8 +23,11 @@
 #
 #################################################################################
 
-ZMSERVER="mail.relayserver.org.uk"
-MAILHOST="mail.myserver.me.uk"
+set -x
+
+ZMSERVER="mail.relayserver.org.uk"  # the static ip host we will relay through
+ZMSUBNET="192.168.1.0/24"           # local trusted network for the static host
+MAILHOST="mail.myserver.me.uk"      # the dynamic ip host
 
 do_getuser(){
   USER=$(whoami)
@@ -38,13 +41,13 @@ do_getcurrent(){
 }
 
 do_getconfigured(){
-  # this assumes there are three networks listed; 127.0.0.0/8, etc. and we want to compare the third one 
-  CONFIGURED=$(zmprov gs $ZMSERVER zimbraMtaMyNetworks | grep zimbraMtaMyNetworks | awk '{for(i=3;i<NF;i++)printf "%s",$i OFS; if (NF) printf "%s",$NF; printf ORS}')
+  # this assumes the value we want to compare against is the last entry in the trusted networks list
+  CONFIGURED=$(zmprov gs $ZMSERVER zimbraMtaMyNetworks | grep zimbraMtaMyNetworks | wk '{print $NF}')
 }
 
 do_compare(){
   if [ "$CURRENT" != "$CONFIGURED" ]; then
-    zmprov ms "$ZMSERVER" zimbraMtaMyNetworks "127.0.0.0/8 192.168.2.0/24 $CURRENT"
+    zmprov ms "$ZMSERVER" zimbraMtaMyNetworks "127.0.0.0/8 $ZMSUBNET $CURRENT"
     postfix reload
   fi
 }
@@ -52,7 +55,7 @@ do_compare(){
 main(){
   do_getuser
   do_getcurrent
-  go_getconfigured
+  do_getconfigured
   do_compare
 }
   
