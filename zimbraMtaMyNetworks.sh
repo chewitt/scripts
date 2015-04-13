@@ -29,7 +29,7 @@ MAILHOST="mail.myserver.me.uk"      # the dynamic ip host
 
 do_getuser(){
   USER=$(whoami)
-  if [ "$USER" != "zimbra" ]; then
+  if [ "$USER" != "root" ]; then
     exit 1
   fi
 }
@@ -39,14 +39,17 @@ do_getcurrent(){
 }
 
 do_getconfigured(){
+  cd /opt/zimbra/bin
   # this assumes the value we want to compare against is the last entry in the trusted networks list
-  CONFIGURED=$(zmprov gs $ZMSERVER zimbraMtaMyNetworks | grep zimbraMtaMyNetworks | awk '{print $NF}')
+  CONFIGURED=$(./zmprov gs $ZMSERVER zimbraMtaMyNetworks | grep zimbraMtaMyNetworks | awk '{print $NF}')
 }
 
 do_compare(){
   if [ "$CURRENT" != "$CONFIGURED" ]; then
-    zmprov ms "$ZMSERVER" zimbraMtaMyNetworks "127.0.0.0/8 $ZMSUBNET $CURRENT"
-    postfix reload
+    cd /opt/zimbra/bin
+    ./zmprov ms "$ZMSERVER" zimbraMtaMyNetworks "127.0.0.0/8 $ZMSUBNET $CURRENT"
+    cd /opt/zimbra/postfix/sbin
+    ./postfix reload
   fi
 }
 
