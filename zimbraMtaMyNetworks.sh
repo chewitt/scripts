@@ -23,8 +23,6 @@
 #
 #################################################################################
 
-set -x
-
 ZMSERVER="mail.relayserver.org.uk"  # the static ip host we will relay through
 ZMSUBNET="192.168.1.0/24"           # the static ip host local trusted network(s)
 MAILHOST="mail.myserver.me.uk"      # the dynamic ip host
