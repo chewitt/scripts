@@ -34,7 +34,7 @@ do_getuser(){
 }
 
 do_getcurrent(){
-  CURRENT=$(dig $MAILHOST a | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep -v "192.168|172.16|10.10")
+  CURRENT=$(dig $MAILHOST a | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep -v -e ^192.168 -e ^172.16 -e ^10.10)
 }
 
 do_getconfigured(){
