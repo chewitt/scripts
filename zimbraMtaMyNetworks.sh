@@ -26,7 +26,7 @@
 set -x
 
 ZMSERVER="mail.relayserver.org.uk"  # the static ip host we will relay through
-ZMSUBNET="192.168.1.0/24"           # local trusted network for the static host
+ZMSUBNET="192.168.1.0/24"           # the static ip host local trusted network(s)
 MAILHOST="mail.myserver.me.uk"      # the dynamic ip host
 
 do_getuser(){
@@ -42,7 +42,7 @@ do_getcurrent(){
 
 do_getconfigured(){
   # this assumes the value we want to compare against is the last entry in the trusted networks list
-  CONFIGURED=$(zmprov gs $ZMSERVER zimbraMtaMyNetworks | grep zimbraMtaMyNetworks | wk '{print $NF}')
+  CONFIGURED=$(zmprov gs $ZMSERVER zimbraMtaMyNetworks | grep zimbraMtaMyNetworks | awk '{print $NF}')
 }
 
 do_compare(){
