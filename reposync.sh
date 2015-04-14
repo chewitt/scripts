@@ -40,6 +40,18 @@ check_arch(){
   fi
 }
 
+check_distro(){
+  if [ -f /etc/centos-release ]; then
+    DISTRO=$(cat /etc/centos-release | grep -o '[0-9]\+' | head -n 1)
+    DISTRO=$(CENTOS$DISTRO)
+  else
+    clear
+    echo "ERROR: This script must be run on CentOS!"
+    echo ""
+    exit 1
+  fi
+}
+
 check_credentials(){
   if [ -f /root/.rsalive ]; then
     . /root/.rsalive
@@ -67,33 +79,54 @@ check_credentials(){
 }
 
 check_dependencies(){
-  PKG_REPOSYNC=$(rpm -qa | grep yum-utils)
-  if [ -z "$PKG_REPOSYNC" ]; then
+  YUM_CERT=$(rpm -qa gpg-pubkey*)
+  if [ -z "$YUM_CERT" ]; then
+    if [ "$DISTRO" = "CENTOS7" ]; then
+      rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+    else
+      rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+    fi
+  fi
+
+  YUM_REPOSYNC=$(rpm -qa | grep yum-utils)
+  if [ -z "$YUM_REPOSYNC" ]; then
     yum -q -y install yum-utils
   fi
 
-  PKG_CREATEREPO=$(rpm -qa | grep createrepo)
-  if [ -z "$PKG_CREATEREPO" ]; then
+  YUM_CREATEREPO=$(rpm -qa | grep createrepo)
+  if [ -z "$YUM_CREATEREPO" ]; then
     yum -q -y install createrepo
   fi
 
-  PKG_HTTPD=$(rpm -qa | grep httpd)
-  if [ -z "$PKG_HTTPD" ]; then
+  YUM_HTTPD=$(rpm -qa | grep httpd)
+  if [ -z "$YUM_HTTPD" ]; then
     yum -q -y install httpd
-    chkconfig --levels 235 httpd on
-    HOSTNAME=$(grep HOSTNAME /etc/sysconfig/network | sed 's/HOSTNAME=//g')
-    sed -i "s/#ServerName www.example.com:80/ServerName $HOSTNAME/g" /etc/httpd/conf/httpd.conf
-    service httpd start
+    if [ "$DISTRO" = "CENTOS7" ]; then
+      systemctl enable httpd.service
+      HOSTNAME=$(cat /etc/hostname)
+      sed -i "s/#ServerName www.example.com:80/ServerName $HOSTNAME/g" /etc/httpd/conf/httpd.conf
+      systemctl start httpd.service
+    else
+      chkconfig --levels 235 httpd on
+      HOSTNAME=$(grep HOSTNAME /etc/sysconfig/network | sed 's/HOSTNAME=//g')
+      sed -i "s/#ServerName www.example.com:80/ServerName $HOSTNAME/g" /etc/httpd/conf/httpd.conf
+      service httpd start
+    fi
   fi
 
-  PORT80=$(grep 80 /etc/sysconfig/iptables)
-  if [ -z "$PORT80" ]; then
-    service iptables stop
-    LINE=$(sed -n "/22/{=;}" /etc/sysconfig/iptables)
-    LINE=$(( $LINE + 1 ))
-    RULE="-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT"
-    sed -i "$LINE"i"$RULE" /etc/sysconfig/iptables
-    service iptables start
+  if [ "$DISTRO" = "CENTOS7" ]; then
+    firewall-cmd --zone=public --add-port=80/tcp --permanent
+    firewall-cmd --reload
+  else
+    PORT80=$(grep 80 /etc/sysconfig/iptables)
+    if [ -z "$PORT80" ]; then
+      service iptables stop
+      LINE=$(sed -n "/22/{=;}" /etc/sysconfig/iptables)
+      LINE=$(( $LINE + 1 ))
+      RULE="-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT"
+      sed -i "$LINE"i"$RULE" /etc/sysconfig/iptables
+      service iptables start
+    fi
   fi
 
   REPOFILE="/etc/yum.repos.d/smcupdate.repo"
