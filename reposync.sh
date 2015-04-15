@@ -42,8 +42,7 @@ check_arch(){
 
 check_distro(){
   if [ -f /etc/centos-release ]; then
-    DISTRO=$(cat /etc/centos-release | grep -o '[0-9]\+' | head -n 1)
-    DISTRO=$(CENTOS$DISTRO)
+    VERSION=$(cat /etc/centos-release | grep -o '[0-9]\+' | head -n 1)
   else
     clear
     echo "ERROR: This script must be run on CentOS!"
@@ -81,7 +80,7 @@ check_credentials(){
 check_dependencies(){
   YUM_CERT=$(rpm -qa gpg-pubkey*)
   if [ -z "$YUM_CERT" ]; then
-    if [ "$DISTRO" = "CENTOS7" ]; then
+    if [ "$VERSION" = "7" ]; then
       rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
     else
       rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
@@ -101,7 +100,7 @@ check_dependencies(){
   YUM_HTTPD=$(rpm -qa | grep httpd)
   if [ -z "$YUM_HTTPD" ]; then
     yum -q -y install httpd
-    if [ "$DISTRO" = "CENTOS7" ]; then
+    if [ "$VERSION" = "7" ]; then
       systemctl enable httpd.service
       HOSTNAME=$(cat /etc/hostname)
       sed -i "s/#ServerName www.example.com:80/ServerName $HOSTNAME/g" /etc/httpd/conf/httpd.conf
@@ -114,9 +113,12 @@ check_dependencies(){
     fi
   fi
 
-  if [ "$DISTRO" = "CENTOS7" ]; then
-    firewall-cmd --zone=public --add-port=80/tcp --permanent
-    firewall-cmd --reload
+  if [ "$VERSION" = "7" ]; then
+    PORT80=$(firewall-cmd --zone=public --list-ports | grep 80/tcp)
+    if [ -z "$PORT80" ]; then
+      firewall-cmd --zone=public --add-port=80/tcp --permanent
+      firewall-cmd --reload
+    fi
   else
     PORT80=$(grep 80 /etc/sysconfig/iptables)
     if [ -z "$PORT80" ]; then
@@ -134,7 +136,7 @@ check_dependencies(){
     echo "[smcupdate]" > "$REPOFILE"
     echo "name=Security Analytics Yum Repo" >> "$REPOFILE"
     echo "baseurl = https://$LIVE_USER:$LIVE_PASS@smcupdate.emc.com/nw10/rpm" >> "$REPOFILE"
-	#echo "baseurl = http://repo.rsalab.net/smcupdate" >> "$REPOFILE"
+    #echo "baseurl = http://repo.rsalab.net/smcupdate" >> "$REPOFILE"
     echo "enabled = 0" >> "$REPOFILE"
   fi
 
@@ -169,6 +171,7 @@ do_selinux(){
 main(){
   check_root
   check_arch
+  check_distro
   check_credentials
   check_dependencies
   do_cleanzeros
