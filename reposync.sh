@@ -31,21 +31,12 @@ check_root(){
   fi
 }
 
-check_arch(){
-  if [ "$(uname -m)" = "i686" ]; then
-    clear
-    echo "ERROR: This script must be run on CentOS 64-bit!"
-    echo ""
-    exit 1
-  fi
-}
-
 check_distro(){
-  if [ -f /etc/centos-release ]; then
+  if [ -f /etc/centos-release -a "$(uname -m)" = "x86_64" ]; then
     VERSION=$(cat /etc/centos-release | grep -o '[0-9]\+' | head -n 1)
   else
     clear
-    echo "ERROR: This script must be run on CentOS!"
+    echo "ERROR: This script must be run on a CentOS v6/7 x86_64 release!"
     echo ""
     exit 1
   fi
@@ -170,7 +161,6 @@ do_selinux(){
 
 main(){
   check_root
-  check_arch
   check_distro
   check_credentials
   check_dependencies
