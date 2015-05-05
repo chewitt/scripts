@@ -126,21 +126,23 @@ backup_mongodb(){
 backup_jetty(){
   echo ""
   echo "INFO: Backing up Jetty"
-  stop jettysrv
+  JETTYSRV=$(status jettysrv | awk '{print $2}')
+  if [ "$JETTYSRV" = "start/running," ]; then JETTYSRV="RESTART" && stop jettysrv; fi
   if [ ! -f ~/h2-1.3.172.jar ]; then
     wget http://repo1.maven.org/maven2/com/h2database/h2/1.3.172/h2-1.3.172.jar -O ~/h2-1.3.172.jar
   fi
   tar -C / --atime-preserve --recursion -cphjf jettyuax.tar.bz2 var/lib/netwitness/uax/nodeSecret.* var/lib/netwitness/uax/conf var/lib/netwitness/uax/lib var/lib/netwitness/uax/logs var/lib/netwitness/uax/plugins var/lib/netwitness/uax/scheduler var/lib/netwitness/uax/security-policy
-  start jettysrv
+  if [ "$JETTYSRV" = "RESTART" ]; then start jettysrv; fi
 }
 
 backup_reportingengine(){
   echo ""
-  echo "INFO: Backup up Reporting Engine"
-  stop rsasoc_re
+  echo "INFO: Backing up Reporting Engine"
+  REPORTINGENGINE=$(status rsasoc_re | awk '{print $2}')
+  if [ "$REPORTINGENGINE" = "start/running," ]; then REPORTINGENGINE="RESTART" && stop rsasoc_re; fi
   tar -C / --atime-preserve --recursion -cphjf reportingengine.tar.bz2 --exclude='home/rsasoc/rsa/soc/reporting-engine/temp' home/rsasoc
   tar -C / --atime-preserve --recursion -cphjf reportingenginefiles.tar.bz2 --exclude='home/rsasoc/rsa/soc/reporting-engine/resultstore' --exclude='home/rsasoc/rsa/soc/reporting-engine/livecharts' --exclude='home/rsasoc/rsa/soc/reporting-engine/statusdb' --exclude='home/rsasoc/rsa/soc/reporting-engine/logs' --exclude='home/rsasoc/rsa/soc/reporting-engine/temp' --exclude='home/rsasoc/rsa/soc/reporting-engine/formattedReports' exclude='home/rsasoc/rsa/soc/reporting-engine/subreports' home/rsasoc/rsa/soc/reporting-engine
-  start rsasoc_re
+  if [ "$REPORTINGENGINE" = "RESTART" ]; then start rsasoc_re; fi
 }
 
 backup_coreappliance(){
@@ -208,35 +210,51 @@ backup_coreappliance(){
 backup_esa(){
   echo ""
   echo "INFO: Backing up ESA"
-  service rsa-esa stop
+  RSAESA=$(service rsa-esa status | awk '{print $7}')
+  if [ "$RSAESA" = "running" ]; then
+    RSAESA="RESTART"
+    service rsa-esa stop
+  fi
   tar -C / --atime-preserve --recursion -cphjf esa.tar.bz2 --exclude=opt/rsa/esa/logs --exclude=opt/rsa/esa/db --exclude=opt/rsa/esa/bin --exclude=opt/rsa/esa/lib opt/rsa/esa
-  service rsa-esa start
+  if [ "$RSAESA" = "RESTART" ]; then service rsa-esa start; fi
 }
 
 backup_logcollector(){
   echo ""
   echo "INFO: Backing up Log Collector"
-  stop nwlogcollector
+  LOGCOLLECTOR=$(pidof NwLogCollector)
+  if [ -n "$LOGCOLLECTOR" ]; then
+    LOGCOLLECTOR="RESTART"
+    stop nwlogcollector
+  fi
   tar -C / --atime-preserve --recursion -cphjf logcollector.tar.bz2 var/netwitness/logcollector
-  start nwlogcollector
+  if [ "$LOGCOLLECTOR" = "RESTART" ]; then start nwlogcollector; fi
 }
 
 backup_malware(){
   echo ""
   echo "INFO: Backing up Malware"
-  stop rsaMalwareDevice
+  MALWARE=$(status rsaMalwareDevice | awk '{print $2}')
+  if [ "$MALWARE" = "start/running," ]; then
+    MALWARE="RESTART"
+    stop rsaMalwareDevice
+  fi
   tar -C / --atime-preserve --recursion -cphjf malware.tar.bz2 var/lib/netwitness/rsamalware --exclude='root.war' etc/init/rsaMalwareDevice.conf
-  start rsaMalwareDevice
+  if [ "$MALWARE" = "RESTART" ]; then start rsaMalwareDevice; fi
 }
 
 backup_wconnector(){
   echo ""
   echo "INFO: Backing up Warehouse Connector"
-  stop nwwarehouseconnector
+  WCONNECTOR=$(status nwwarehouseconnector | awk '{print $2}')
+  if [ "$WCONNECTOR" = "start/running," ]; then
+    WCONNECTOR="RESTART"
+    stop nwwarehouseconnector
+  fi
   tar -C / --atime-preserve --recursion -cphjf lockbox.tar.bz2 etc/netwitness/ng/lockbox
   tar -C / --atime-preserve --recursion -cphjf wcfiles.tar.bz2 etc/netwitness/ng/NwWarehouseconnector.cfg etc/netwitness/ng/multivalue-bootstrap.xml etc/netwitness/ng/multivalue-users.xml
   tar -C / --atime-preserve --recursion -cphjf wconnector.tar.bz2 var/netwitness/warehouseconnector
-  start nwwarehouseconnector
+  if [ "$WCONNECTOR" = "RESTART" ]; then start nwwarehouseconnector; fi
 }
 
 main(){
@@ -244,7 +262,7 @@ main(){
   do_recipe
   do_backup
   do_tarball
-#  do_offbox
+# do_offbox
   do_localcopy
   do_cleanup
 }
