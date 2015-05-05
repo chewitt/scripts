@@ -91,7 +91,7 @@ do_offbox(){
   echo "INFO: Copying backup file to off-box location"
   mkdir /mnt/tmpmnt
   mount -t cifs //corp.rsalab.net/BACKUPS /mnt/tmpmnt -o username=backups,password=secret
-  cp /tmp/$backname.tgz /mnt/tmpmnt
+  cp "$tempdir/$backupfile" /mnt/tmpmnt
   umount /mnt/tmpmnt
 }
 
@@ -108,7 +108,7 @@ do_cleanup(){
 backup_etc(){
   echo ""
   echo "INFO: Backing up /etc"
-  tar -C / --exclude=etc/netwitness --exclude=etc/alternatives --atime-preserve --recursion -cphjf etc.tar.bz2 etc
+  tar -C / --atime-preserve --recursion -cphjf etc.tar.bz2 --exclude=etc/netwitness --exclude=etc/alternatives etc
 }
 
 backup_puppetssl(){
