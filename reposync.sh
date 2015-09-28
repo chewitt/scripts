@@ -32,8 +32,8 @@ check_root(){
 }
 
 check_distro(){
-  if [ -f /etc/centos-release -a "$(uname -m)" = "x86_64" ]; then
-    VERSION=$(cat /etc/centos-release | grep -o '[0-9]\+' | head -n 1)
+  if [ -f /etc/centos-release ] && [ "$(uname -m)" = "x86_64" ]; then
+    VERSION=$(grep -o '[0-9]\+' /etc/centos-release | head -n 1)
   else
     clear
     echo "ERROR: This script must be run on a CentOS v6/7 x86_64 release!"
@@ -50,12 +50,12 @@ check_credentials(){
     echo "Please enter your RSA Live! credentials"
     echo ""
     echo -n "Username: "
-    read LIVE_USER
+    read -r LIVE_USER
     echo -n "Password: "
-    read LIVE_PASS
+    read -r LIVE_PASS
     echo ""
     while true; do
-      read -p "You entered $LIVE_USER and $LIVE_PASS; correct? [y/n]" answer
+      read -rp "You entered $LIVE_USER and $LIVE_PASS; correct? [y/n]" answer
       case $answer in
         [Yy]* ) break;;
         [Nn]* ) check_credentials;;
@@ -115,7 +115,7 @@ check_dependencies(){
     if [ -z "$PORT80" ]; then
       service iptables stop
       LINE=$(sed -n "/22/{=;}" /etc/sysconfig/iptables)
-      LINE=$(( $LINE + 1 ))
+      LINE=$(( LINE + 1 ))
       RULE="-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT"
       sed -i "$LINE"i"$RULE" /etc/sysconfig/iptables
       service iptables start
