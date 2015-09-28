@@ -71,6 +71,7 @@ check_credentials(){
 check_dependencies(){
   YUM_CERT=$(rpm -qa gpg-pubkey*)
   if [ -z "$YUM_CERT" ]; then
+    echo "Installing GPG certs"
     if [ "$VERSION" = "7" ]; then
       rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
     else
@@ -80,16 +81,19 @@ check_dependencies(){
 
   YUM_REPOSYNC=$(rpm -qa | grep yum-utils)
   if [ -z "$YUM_REPOSYNC" ]; then
+    echo "Installing yum-utils"
     yum -q -y install yum-utils
   fi
 
   YUM_CREATEREPO=$(rpm -qa | grep createrepo)
   if [ -z "$YUM_CREATEREPO" ]; then
+    echo "Installing createrepo"
     yum -q -y install createrepo
   fi
 
   YUM_HTTPD=$(rpm -qa | grep httpd)
   if [ -z "$YUM_HTTPD" ]; then
+    echo "Installing and configuring httpd"
     yum -q -y install httpd
     if [ "$VERSION" = "7" ]; then
       systemctl enable httpd.service
@@ -104,6 +108,7 @@ check_dependencies(){
     fi
   fi
 
+  echo "Configuring firewall"
   if [ "$VERSION" = "7" ]; then
     PORT80=$(firewall-cmd --zone=public --list-ports | grep 80/tcp)
     if [ -z "$PORT80" ]; then
@@ -124,6 +129,7 @@ check_dependencies(){
 
   REPOFILE="/etc/yum.repos.d/smcupdate.repo"
   if [ ! -f /etc/yum.repos.d/smcupdate.repo ]; then
+    echo "Configuring smcupdate.repo"
     echo "[smcupdate]" > "$REPOFILE"
     echo "name=Security Analytics Yum Repo" >> "$REPOFILE"
     echo "baseurl = https://$LIVE_USER:$LIVE_PASS@smcupdate.emc.com/nw10/rpm" >> "$REPOFILE"
@@ -132,11 +138,13 @@ check_dependencies(){
   fi
 
   if [ ! -d /var/www/html/smcupdate ]; then
+    echo "Configuring webserver folders"
     mkdir -p /var/www/html/smcupdate
   fi
 
   CRONTAB=$(crontab -l | grep reposync.sh)
   if [ -z "$CRONTAB" ]; then
+    echo "Configuring crontab entries"
     (crontab -l ; echo "30 0 * * * /bin/bash /root/reposync.sh >> /root/reposync.log 2>&1")| crontab -
     (crontab -l ; echo "30 12 * * * /bin/bash /root/reposync.sh >> /root/reposync.log 2>&1")| crontab -
     touch /root/reposync.log
