@@ -92,9 +92,19 @@ check_dependencies(){
   fi
 
   YUM_HTTPD=$(rpm -qa | grep httpd)
+  LVHOME=$(fdisk -l | grep lv_home | awk '{print $5}')
+  LVROOT=$(fdisk -l | grep lv_root | awk '{print $5}')
   if [ -z "$YUM_HTTPD" ]; then
     echo "Installing and configuring httpd"
     yum -q -y install httpd
+    if [ "$LVHOME" -gt "$LVROOT" ]; then
+      echo "Moving /var/www to /home/www"
+      mv /var/www /home/
+      ln -sf /home/www /var/www
+      ln -sf /home/www /root/www
+    else
+      ln -sf /var/www /root/www
+    fi
     if [ "$VERSION" = "7" ]; then
       systemctl enable httpd.service
       HOSTNAME=$(cat /etc/hostname)
