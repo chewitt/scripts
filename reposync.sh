@@ -174,7 +174,11 @@ do_createrepo(){
 }
 
 do_selinux(){
-  restorecon -rv /var/www/html
+  if [ -h /var/www ]; then
+    chcon -R -t httpd_user_content_t /home/www
+  else
+    restorecon -rv /var/www/html
+  fi
 }
 
 main(){
